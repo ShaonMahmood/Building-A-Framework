@@ -1,4 +1,5 @@
 # api.py
+import inspect
 from parse import parse
 from webob import Request, Response
 class API:
@@ -13,19 +14,15 @@ class API:
         self.routes = {}
 
     def route(self,path):
+        assert path not in self.routes, "Such route already exists."
         def wrapper(handler):
-            print(path)
             self.routes[path] = handler
             return handler
         return wrapper
 
     def __call__(self, environ, start_response, *args, **kwargs):
         request = Request(environ)
-
-        # response = Response()
-        # response.text = "hello, from superfarme"
         response = self.handle_request(request)
-
         return response(environ,start_response)
 
 
@@ -44,26 +41,17 @@ class API:
 
     def handle_request(self, request):
         # user_agent = request.environ.get("HTTP_USER_AGENT", "No user agent found")
-        print(request.path)
-
         response = Response()
-
         handler, kwargs = self.find_handler(request_path=request.path)
 
-        # if request.path == "/favicon.ico":
-        #     return response
         if handler:
+            if inspect.isclass(handler):
+                handler = getattr(handler(), request.method.lower(), None)
+                if handler is None:
+                    raise AttributeError("Method now allowed", request.method)
             handler(request,response,**kwargs)
 
         else:
             self.default_response(response)
 
-        # for path, handler in  self.routes.items():
-        #     print(path,handler)
-        #     if path == request.path:
-        #         handler(request,response)
         return response
-
-        # response.text = f"Hello, message carried by {user_agent}"
-
-        # return response
