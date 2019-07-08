@@ -31,11 +31,14 @@ class API:
         print(request.path)
 
         response = Response()
+        if request.path != "/favicon.ico":
+            self.routes[request.path](request,response)
 
-        for path, handler in  self.routes.items():
-            if path == request.path:
-                handler(request,response)
-                return response
+        # for path, handler in  self.routes.items():
+        #     print(path,handler)
+        #     if path == request.path:
+        #         handler(request,response)
+        return response
 
         # response.text = f"Hello, message carried by {user_agent}"
 
